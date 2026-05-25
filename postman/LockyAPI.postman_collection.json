@@ -1,0 +1,294 @@
+{
+  "info": {
+    "_postman_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "name": "LockyAPI",
+    "description": "Collection completa da LockyAPI - backend REST de gestão de cacifos inteligentes (DWEB II - UMAIA, 2025/2026).\n\n## Como autenticar\n1. Fazer login no browser em {{baseUrl}}/auth/github\n2. No browser: F12 -> Application -> Cookies -> {{baseUrl}} -> copiar o valor de `connect.sid`\n3. No Postman: clicar em **Cookies** -> adicionar o domínio `localhost` -> colar o cookie\n4. Os pedidos abaixo passam a ser enviados autenticados\n\n## Variáveis\n- `baseUrl` - URL base da API (default: http://localhost:3001)\n- `stationId`, `lockerId`, `reservationId` - IDs para os pedidos /:id (defaults: 1)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl",       "value": "http://localhost:3001", "type": "string" },
+    { "key": "stationId",     "value": "1", "type": "string" },
+    { "key": "lockerId",      "value": "1", "type": "string" },
+    { "key": "reservationId", "value": "1", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "description": "Endpoints de autenticação OAuth2 (GitHub).",
+      "item": [
+        {
+          "name": "Iniciar login GitHub",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/auth/github", "host": ["{{baseUrl}}"], "path": ["auth", "github"] },
+            "description": "Não funciona via Postman (é um redirect 302 para o GitHub). Abrir este URL no browser para fazer login."
+          }
+        },
+        {
+          "name": "Quem sou eu (/auth/me)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/auth/me", "host": ["{{baseUrl}}"], "path": ["auth", "me"] },
+            "description": "Devolve o user logado. 401 se não autenticado."
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/auth/logout", "host": ["{{baseUrl}}"], "path": ["auth", "logout"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Stations",
+      "description": "GETs públicos. POST/PUT/DELETE requerem autenticação.",
+      "item": [
+        {
+          "name": "Listar stations",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/stations?city=Lisboa&isActive=true",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "stations"],
+              "query": [
+                { "key": "city",     "value": "Lisboa", "disabled": true, "description": "Filtrar por cidade exata" },
+                { "key": "isActive", "value": "true",   "disabled": true }
+              ]
+            },
+            "description": "Filtros opcionais. Endpoint público - não requer auth."
+          }
+        },
+        {
+          "name": "Obter station por id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/stations/{{stationId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "stations", "{{stationId}}"]
+            },
+            "description": "Devolve a station + array `lockers` aninhado."
+          }
+        },
+        {
+          "name": "Criar station",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Estação de Teste\",\n  \"address\": \"Rua de Exemplo, 123\",\n  \"city\": \"Porto\",\n  \"latitude\": 41.1579,\n  \"longitude\": -8.6291,\n  \"isActive\": true\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/api/stations", "host": ["{{baseUrl}}"], "path": ["api", "stations"] }
+          }
+        },
+        {
+          "name": "Atualizar station",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Estação Atualizada\",\n  \"isActive\": false\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/stations/{{stationId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "stations", "{{stationId}}"]
+            }
+          }
+        },
+        {
+          "name": "Remover station",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/stations/{{stationId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "stations", "{{stationId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Lockers",
+      "description": "Todos os endpoints requerem autenticação.",
+      "item": [
+        {
+          "name": "Listar lockers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/lockers?stationId=1&size=M&status=available",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "lockers"],
+              "query": [
+                { "key": "stationId", "value": "1",         "disabled": true },
+                { "key": "size",      "value": "M",         "disabled": true, "description": "S | M | L" },
+                { "key": "status",    "value": "available", "disabled": true, "description": "available | occupied | maintenance" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Obter locker por id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/lockers/{{lockerId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "lockers", "{{lockerId}}"]
+            },
+            "description": "Devolve o locker + station + reservations aninhados."
+          }
+        },
+        {
+          "name": "Criar locker",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"stationId\": 1,\n  \"number\": \"L99\",\n  \"size\": \"M\",\n  \"pricePerHour\": 2.50,\n  \"status\": \"available\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/api/lockers", "host": ["{{baseUrl}}"], "path": ["api", "lockers"] }
+          }
+        },
+        {
+          "name": "Atualizar locker",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"maintenance\",\n  \"pricePerHour\": 3.00\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/lockers/{{lockerId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "lockers", "{{lockerId}}"]
+            }
+          }
+        },
+        {
+          "name": "Remover locker",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/lockers/{{lockerId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "lockers", "{{lockerId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reservations",
+      "description": "Acesso restrito ao próprio user.",
+      "item": [
+        {
+          "name": "Listar minhas reservas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/reservations?status=active",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "reservations"],
+              "query": [
+                { "key": "status", "value": "active", "disabled": true, "description": "active | completed | cancelled" },
+                { "key": "userId", "value": "1",      "disabled": true, "description": "Apenas admin" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Obter reserva por id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/reservations/{{reservationId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "reservations", "{{reservationId}}"]
+            },
+            "description": "403 se a reserva não pertencer ao utilizador autenticado."
+          }
+        },
+        {
+          "name": "Criar reserva",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"lockerId\": 5,\n  \"startTime\": \"2026-05-15T10:00:00Z\",\n  \"endTime\": \"2026-05-15T14:00:00Z\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/api/reservations", "host": ["{{baseUrl}}"], "path": ["api", "reservations"] },
+            "description": "userId vem da sessão (não enviar no body). totalPrice é calculado no servidor."
+          }
+        },
+        {
+          "name": "Atualizar reserva",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"endTime\": \"2026-05-15T16:00:00Z\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/reservations/{{reservationId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "reservations", "{{reservationId}}"]
+            }
+          }
+        },
+        {
+          "name": "Remover reserva",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/reservations/{{reservationId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "reservations", "{{reservationId}}"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
