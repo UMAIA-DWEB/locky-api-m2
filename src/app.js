@@ -36,10 +36,8 @@ app.use(session({
   cookie: {
     httpOnly: true,
     maxAge: 24 * 60 * 60 * 1000,
-    // em prod, frontend e API partilham origem (Nginx proxy) ---> sameSite lax basta
-    // em dev, frontend está noutra porta ---> sameSite none + secure
-    sameSite: isProd ? 'lax' : 'none',
-    secure: isProd ? false : true,
+    sameSite: 'lax',
+    secure: isProd,
   },
 }));
 
