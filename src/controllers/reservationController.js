@@ -1,15 +1,26 @@
 const { Reservation, Locker } = require('../models');
 
+const reservationInclude = [
+  {
+    association: 'locker',
+    include: [{ association: 'station' }],
+  },
+];
+
 exports.list = async (req, res) => {
   const reservations = await Reservation.findAll({
     where: { userId: req.user.id },
+    include: reservationInclude,
     order: [['startTime', 'DESC']],
   });
   res.json(reservations);
 };
 
 exports.get = async (req, res) => {
-  res.json(req.reservation);
+  const reservation = await Reservation.findByPk(req.reservation.id, {
+    include: reservationInclude,
+  });
+  res.json(reservation);
 };
 
 exports.create = async (req, res) => {
@@ -34,7 +45,9 @@ exports.create = async (req, res) => {
     endTime: end,
     totalPrice,
   });
-  res.status(201).json(reservation);
+
+  const full = await Reservation.findByPk(reservation.id, { include: reservationInclude });
+  res.status(201).json(full);
 };
 
 exports.update = async (req, res) => {
@@ -43,8 +56,21 @@ exports.update = async (req, res) => {
   const updates = {};
   if (startTime) updates.startTime = new Date(startTime);
   if (endTime) updates.endTime = new Date(endTime);
+
+  if (startTime || endTime) {
+    const newStart = updates.startTime || reservation.startTime;
+    const newEnd = updates.endTime || reservation.endTime;
+    const locker = await Locker.findByPk(reservation.lockerId);
+    if (locker) {
+      const hours = (newEnd - newStart) / (1000 * 60 * 60);
+      updates.totalPrice = Number((locker.pricePerHour * hours).toFixed(2));
+    }
+  }
+
   await reservation.update(updates);
-  res.json(reservation);
+
+  const full = await Reservation.findByPk(reservation.id, { include: reservationInclude });
+  res.json(full);
 };
 
 exports.remove = async (req, res) => {
