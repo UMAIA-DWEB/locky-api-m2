@@ -8,6 +8,10 @@ require('dotenv').config();
 
 const app = express();
 
+// necessario para a API saber que esta atras de um proxy (Nginx em prod)
+// e tratar X-Forwarded-Proto/Host corretamente
+app.set('trust proxy', 1);
+
 // CORS com credentials para o frontend React
 const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:5173')
   .split(',')
@@ -27,8 +31,8 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-const isProd = process.env.NODE_ENV === 'production';
-
+// secure:false porque corremos sobre HTTP localhost mesmo em "prod" deste projeto.
+// Num deploy real com HTTPS, mudar para true.
 app.use(session({
   secret: process.env.SESSION_SECRET || 'dev-secret-change-me',
   resave: false,
@@ -37,7 +41,7 @@ app.use(session({
     httpOnly: true,
     maxAge: 24 * 60 * 60 * 1000,
     sameSite: 'lax',
-    secure: isProd,
+    secure: false,
   },
 }));
 

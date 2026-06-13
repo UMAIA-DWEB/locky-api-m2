@@ -1,5 +1,6 @@
 const app = require('./app');
 const { sequelize } = require('./models');
+const autoSeedIfEmpty = require('./seeders/autoSeed');
 require('dotenv').config();
 
 const PORT = process.env.PORT || 3000;
@@ -11,6 +12,8 @@ async function start() {
 
     await sequelize.sync({ alter: true });
     console.log('Modelos sincronizados');
+
+    await autoSeedIfEmpty();
 
     app.listen(PORT, () => {
       console.log(`LockyAPI a correr em http://localhost:${PORT}`);
